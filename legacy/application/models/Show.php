@@ -169,6 +169,58 @@ class Application_Model_Show
         $show->setDbAutoPlaylistId($playlistid);
     }
 
+    public function getHasOverrideIntroPlaylist()
+    {
+        $show = CcShowQuery::create()->findPK($this->_showId);
+
+        return $show->getDbOverrideIntroPlaylist();
+    }
+
+    public function getIntroPlaylistId()
+    {
+        $show = CcShowQuery::create()->findPK($this->_showId);
+
+        if ($show->getDbOverrideIntroPlaylist()) {
+            return $show->getDbIntroPlaylistId();
+        }
+
+        return 0;
+    }
+
+    public function setIntroPlaylistId($playlistid)
+    {
+        $show = CcShowQuery::create()->findPK($this->_showId);
+
+        $show->setDbOverrideIntroPlaylist($playlistid != 0);
+        $show->setDbIntroPlaylistId($playlistid);
+    }
+
+    public function getHasOverrideOutroPlaylist()
+    {
+        $show = CcShowQuery::create()->findPK($this->_showId);
+
+        return $show->getDbOverrideOutroPlaylist();
+    }
+
+    public function getOutroPlaylistId()
+    {
+        $show = CcShowQuery::create()->findPK($this->_showId);
+
+        if ($show->getDbOverrideOutroPlaylist()) {
+            return $show->getDbOutroPlaylistId();
+        }
+
+        return 0;
+    }
+
+    public function setOutroPlaylistId($playlistid)
+    {
+        $show = CcShowQuery::create()->findPK($this->_showId);
+
+        $show->setDbOverrideOutroPlaylist($playlistid != 0);
+        $show->setDbOutroPlaylistId($playlistid);
+    }
+
     public function getHosts()
     {
         $sql = <<<'SQL'
@@ -338,8 +390,8 @@ SQL;
             );
 
             if ($overlapping) {
-                return _("Cannot schedule overlapping shows.\nNote: Resizing a repeating show " .
-                    'affects all of its repeats.');
+                return _("Cannot schedule overlapping shows.\nNote: Resizing a repeating show "
+                    . 'affects all of its repeats.');
             }
         }
 
@@ -347,11 +399,11 @@ SQL;
         $hours = ($hours > 0) ? floor($hours) : ceil($hours);
         $mins = abs($deltaMin % 60);
 
-        $sql_gen = 'UPDATE cc_show_instances ' .
-            'SET ends = (ends + :deltaDay1::INTERVAL + :interval1::INTERVAL) ' .
-            'WHERE (id IN (' . implode(',', $instanceIds) . ') ' .
-            'AND ends > :current_timestamp1) ' .
-            "AND ((ends + :deltaDay2::INTERVAL + :interval2::INTERVAL - starts) <= interval '24:00')";
+        $sql_gen = 'UPDATE cc_show_instances '
+            . 'SET ends = (ends + :deltaDay1::INTERVAL + :interval1::INTERVAL) '
+            . 'WHERE (id IN (' . implode(',', $instanceIds) . ') '
+            . 'AND ends > :current_timestamp1) '
+            . "AND ((ends + :deltaDay2::INTERVAL + :interval2::INTERVAL - starts) <= interval '24:00')";
 
         Application_Common_Database::prepareAndExecute(
             $sql_gen,
@@ -365,10 +417,10 @@ SQL;
             'execute'
         );
 
-        $sql_gen = 'UPDATE cc_show_days ' .
-            'SET duration = (CAST(duration AS interval) + :deltaDay3::INTERVAL + :interval3::INTERVAL) ' .
-            'WHERE id IN (' . implode(',', $showDayIds) . ') ' .
-            "AND ((CAST(duration AS interval) + :deltaDay4::INTERVAL + :interval4::INTERVAL) <= interval '24:00')";
+        $sql_gen = 'UPDATE cc_show_days '
+            . 'SET duration = (CAST(duration AS interval) + :deltaDay3::INTERVAL + :interval3::INTERVAL) '
+            . 'WHERE id IN (' . implode(',', $showDayIds) . ') '
+            . "AND ((CAST(duration AS interval) + :deltaDay4::INTERVAL + :interval4::INTERVAL) <= interval '24:00')";
 
         Application_Common_Database::prepareAndExecute(
             $sql_gen,

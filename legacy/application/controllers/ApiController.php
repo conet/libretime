@@ -284,7 +284,7 @@ class ApiController extends Zend_Controller_Action
 
             // default to the station timezone
             $timezone = Application_Model_Preference::GetDefaultTimezone();
-            $userDefinedTimezone = strtolower($request->getParam('timezone'));
+            $userDefinedTimezone = strtolower($request->getParam('timezone') ?? '');
             $upcase = false; // only upcase the timezone abbreviations
             $this->updateTimezone($userDefinedTimezone, $timezone, $upcase);
 
@@ -410,7 +410,7 @@ class ApiController extends Zend_Controller_Action
 
             // default to the station timezone
             $timezone = Application_Model_Preference::GetDefaultTimezone();
-            $userDefinedTimezone = strtolower($request->getParam('timezone'));
+            $userDefinedTimezone = strtolower($request->getParam('timezone') ?? '');
             $upcase = false; // only upcase the timezone abbreviations
             $this->updateTimezone($userDefinedTimezone, $timezone, $upcase);
 
@@ -824,12 +824,11 @@ class ApiController extends Zend_Controller_Action
         $endDateTime = clone $nowDateTime;
         $endDateTime = $endDateTime->add(new DateInterval('PT2H'));
 
-        $this->view->shows =
-            Application_Model_Show::getShows(
-                $nowDateTime,
-                $endDateTime,
-                $onlyRecord = true
-            );
+        $this->view->shows = Application_Model_Show::getShows(
+            $nowDateTime,
+            $endDateTime,
+            $onlyRecord = true
+        );
 
         $this->view->is_recording = false;
         $this->view->server_timezone = Application_Model_Preference::GetDefaultTimezone();
@@ -1048,8 +1047,7 @@ class ApiController extends Zend_Controller_Action
         $dir_id = $request->getParam('dir_id');
         $all = $request->getParam('all');
 
-        $this->view->files =
-            Application_Model_StoredFile::listAllFiles($dir_id, $all);
+        $this->view->files = Application_Model_StoredFile::listAllFiles($dir_id, $all);
     }
 
     public function getStreamSettingAction()
@@ -1349,8 +1347,7 @@ class ApiController extends Zend_Controller_Action
         $streams = ['s1', 's2', 's3', 's4'];
         $stream_params = [];
         foreach ($streams as $s) {
-            $stream_params[$s] =
-                Application_Model_StreamSetting::getStreamDataNormalized($s);
+            $stream_params[$s] = Application_Model_StreamSetting::getStreamDataNormalized($s);
         }
         $this->view->stream_params = $stream_params;
     }
@@ -1640,17 +1637,18 @@ class ApiController extends Zend_Controller_Action
         echo "Recalculated {$total} shows.";
     }
 
-    final private function returnJsonOrJsonp($request, $result)
+    private function returnJsonOrJsonp($request, $result)
     {
-        $callback = $request->getParam('callback');
         $response = $this->getResponse();
-        $response->setHeader('Content-Type', 'application/json');
 
         $body = $this->_helper->json->encodeJson($result, false);
 
+        $callback = $request->getParam('callback');
         if ($callback) {
             $response->setHeader('Content-Type', 'application/javascript');
             $body = sprintf('%s(%s)', $callback, $body);
+        } else {
+            $response->setHeader('Content-Type', 'application/json');
         }
         $response->setBody($body);
 
@@ -1667,7 +1665,7 @@ class ApiController extends Zend_Controller_Action
      * @param mixed $status
      * @param mixed $message
      */
-    final private function jsonError($status, $message)
+    private function jsonError($status, $message)
     {
         $this->getResponse()
             ->setHttpResponseCode($status)

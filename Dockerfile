@@ -2,7 +2,7 @@ ARG LIBRETIME_VERSION
 #======================================================================================#
 # Python Builder                                                                       #
 #======================================================================================#
-FROM python:3.10-slim-bullseye as python-builder
+FROM python:3.10-slim-bullseye AS python-builder
 
 WORKDIR /build
 
@@ -18,7 +18,7 @@ RUN pip wheel --wheel-dir . --no-deps .
 #======================================================================================#
 # Python base                                                                          #
 #======================================================================================#
-FROM python:3.10-slim-bullseye as python-base
+FROM python:3.10-slim-bullseye AS python-base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -48,7 +48,7 @@ RUN set -eux \
 #======================================================================================#
 # Python base with ffmpeg                                                              #
 #======================================================================================#
-FROM python-base as python-base-ffmpeg
+FROM python-base AS python-base-ffmpeg
 
 RUN set -eux \
     && DEBIAN_FRONTEND=noninteractive apt-get update \
@@ -59,7 +59,7 @@ RUN set -eux \
 #======================================================================================#
 # Analyzer                                                                             #
 #======================================================================================#
-FROM python-base-ffmpeg as libretime-analyzer
+FROM python-base-ffmpeg AS libretime-analyzer
 
 COPY tools/packages.py /tmp/packages.py
 COPY analyzer/packages.ini /tmp/packages.ini
@@ -97,7 +97,7 @@ ENV LIBRETIME_VERSION=$LIBRETIME_VERSION
 #======================================================================================#
 # Playout                                                                              #
 #======================================================================================#
-FROM python-base-ffmpeg as libretime-playout
+FROM python-base-ffmpeg AS libretime-playout
 
 COPY tools/packages.py /tmp/packages.py
 COPY playout/packages.ini /tmp/packages.ini
@@ -124,6 +124,10 @@ COPY playout .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --editable .[sentry]
 
+RUN set -eux \
+    && _vine_site=$(python3 -c "import site; print(site.getsitepackages()[0])") \
+    && patch -p1 --forward --reject-file=- -d "$_vine_site" < vine-python311.patch || true
+
 # Run
 USER ${UID}:${GID}
 WORKDIR /app
@@ -136,14 +140,16 @@ ENV LIBRETIME_VERSION=$LIBRETIME_VERSION
 #======================================================================================#
 # API                                                                                  #
 #======================================================================================#
-FROM python-base as libretime-api
+FROM python-base AS libretime-api
 
 RUN set -eux \
     && DEBIAN_FRONTEND=noninteractive apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl \
     gcc \
     libc6-dev \
     libpq-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -174,13 +180,12 @@ CMD ["/usr/local/bin/gunicorn", \
 ARG LIBRETIME_VERSION
 ENV LIBRETIME_VERSION=$LIBRETIME_VERSION
 
-HEALTHCHECK CMD ["python3", "-c", \
-    "import requests; requests.get('http://localhost:9001/api/v2/version').raise_for_status()"]
+HEALTHCHECK CMD ["curl", "--fail", "http://localhost:9001/api/v2/version"]
 
 #======================================================================================#
 # Worker                                                                               #
 #======================================================================================#
-FROM python-base as libretime-worker
+FROM python-base AS libretime-worker
 
 WORKDIR /src
 
@@ -208,7 +213,7 @@ ENV LIBRETIME_VERSION=$LIBRETIME_VERSION
 #======================================================================================#
 # Legacy                                                                               #
 #======================================================================================#
-FROM php:7.4-fpm as libretime-legacy
+FROM php:7.4-fpm AS libretime-legacy
 
 ENV LIBRETIME_CONFIG_FILEPATH=/etc/libretime/config.yml
 ENV LIBRETIME_LOG_FILEPATH=php://stderr
@@ -275,6 +280,18 @@ RUN set -eux \
 
 # Run
 USER ${UID}:${GID}
+
+ARG LIBRETIME_VERSION
+ENV LIBRETIME_VERSION=$LIBRETIME_VERSION
+
+#======================================================================================#
+# Nginx
+#======================================================================================#
+FROM nginx AS libretime-nginx
+
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY --from=libretime-legacy /var/www/html /var/www/html
 
 ARG LIBRETIME_VERSION
 ENV LIBRETIME_VERSION=$LIBRETIME_VERSION

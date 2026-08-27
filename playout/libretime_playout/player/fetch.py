@@ -29,6 +29,7 @@ class PypoFetch(Thread):
     name = "fetch"
     daemon = True
 
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -153,7 +154,6 @@ class PypoFetch(Thread):
         except OSError as exception:
             logger.exception(exception)
 
-        self.liquidsoap.clear_all_queues()
         self.liquidsoap.clear_queue_tracker()
 
     def update_liquidsoap_stream_format(

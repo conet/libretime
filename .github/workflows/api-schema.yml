@@ -21,13 +21,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
       - uses: actions/cache@v4
         with:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Get pull request commit range
         if: github.event_name == 'pull_request'
-        run: echo "COMMIT_RANGE=origin/${{ github.base_ref }}..${{ github.sha }}" >> $GITHUB_ENV
+        run: echo "COMMIT_RANGE=${{ github.sha }}~1...${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Get push commit range
         if: github.event_name == 'push'
@@ -71,11 +71,11 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: libretime/client
           path: client

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version = "4.1.0"  # x-release-please-version
+version = "4.5.0"  # x-release-please-version
 
 setup(
     name="libretime-api",
@@ -26,25 +26,25 @@ setup(
         ]
     },
     install_requires=[
-        "django-cors-headers>=3.14.0,<4.4",
-        "django-filter>=2.4.0,<24.3",
+        "django-cors-headers>=3.14.0,<4.5",
+        "django-filter>=2.4.0,<24.4",
         "django>=4.2.0,<4.3",
         "djangorestframework>=3.14.0,<3.16",
-        "drf-spectacular>=0.22.1,<0.28",
-        "requests>=2.31.0,<2.32",
+        "drf-spectacular>=0.22.1,<0.29",
+        "requests>=2.32.2,<2.33",
     ],
     extras_require={
         "prod": [
-            "gunicorn>=22.0.0,<22.1",
-            "psycopg[c]>=3.1.8,<3.2",
-            "uvicorn[standard]>=0.17.6,<0.31.0",
+            "gunicorn>=22.0.0,<23.1",
+            "psycopg[c]>=3.1.8,<3.3",
+            "uvicorn[standard]>=0.17.6,<0.36.0",
         ],
         "dev": [
             "django-coverage-plugin>=3.0.0,<4",
-            "django-stubs>=1.14.0,<6",
+            "django-stubs>=5.1.0,<6",
             "djangorestframework-stubs>=1.8.0,<4",
             "model_bakery>=1.10.1,<2",
-            "psycopg[binary]>=3.1.8,<4",
+            "psycopg[binary]>=3.1.8,<3.3",
             "pylint-django>=2.5.3,<3",
             "pytest-django>=4.5.2,<5",
             "requests-mock>=1.10.0,<2",
